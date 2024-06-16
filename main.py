@@ -22,29 +22,43 @@ parser.add_argument("--wosource", type=bool, default=False, help="without source
 parser.add_argument("--source", type=float, default=1.0, help="")
 parser.add_argument("--dis", type=float, default=0.25, help="")
 parser.add_argument("--sparsity", type=float, default=1.0, help="")
+parser.add_argument("--dataset", type=str, default="douban", help="")
 args = parser.parse_args()
 
 curr_time = datetime.datetime.now()
 timestamp = curr_time.strftime('%m-%d %H-%M')
-sys.stdout = function.Logger('dataset/Tenrec/ready/' + timestamp + '.log', sys.stdout)
+sys.stdout = function.Logger('dataset/'+args.dataset+'/ready/' + timestamp + '.log', sys.stdout)
 
 print('is_ood:{}'.format(args.ood))
 print('batch_size:{},lr:{},latent_dim:{},sparsity:{}'.format(args.batch_size, args.lr, args.latent_dim, args.sparsity))
 print('source:{},dis:{}'.format(args.source, args.dis))
-data_utils_T.split_data(args.ood, args.sparsity)
-train_tgt, train_src = data_utils_T.load_data()
-if args.ood:
-    test, test_ood1, test_ood2, test_ood1_55, test_ood1_64, test_ood1_73, test_ood2_64, test_ood2_46, test_ood2_28 = data_utils_T.load_test(args.ood)
-else:
-    test, test_ood1, test_ood2 = data_utils_T.load_test(args.ood)
+if args.dataset=='douban':
+    data_utils.split_data(args.ood, args.sparsity)
+    train_tgt, train_src = data_utils.load_data()
+    if args.ood:
+        test, test_ood1, test_ood2, test_ood1_55, test_ood1_64, test_ood1_73, test_ood2_64, test_ood2_46, test_ood2_28 = data_utils.load_test(args.ood)
+    else:
+        test, test_ood1, test_ood2 = data_utils.load_test(args.ood)
 
-net = model.CDCOR(2151, 37041, 2869, args.latent_dim)
+    net = model.CDCOR(2106, 9555, 6777, args.latent_dim)
+else:
+    data_utils_T.split_data(args.ood, args.sparsity)
+    train_tgt, train_src = data_utils_T.load_data()
+    if args.ood:
+        test, test_ood1, test_ood2, test_ood1_55, test_ood1_64, test_ood1_73, test_ood2_64, test_ood2_46, test_ood2_28 = data_utils_T.load_test(args.ood)
+    else:
+        test, test_ood1, test_ood2 = data_utils_T.load_test(args.ood)
+
+    net = model.CDCOR(2151, 37041, 2869, args.latent_dim)
 loss_function = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()), lr=args.lr, weight_decay=args.wd)
 
 for epoch in range(args.epoch):
     net.train()
-    train_loader = data_utils_T.resample(args.batch_size, train_tgt, train_src)
+    if args.dataset=='douban':
+        train_loader = data_utils.resample(args.batch_size, train_tgt, train_src)
+    else:
+        train_loader = data_utils_T.resample(args.batch_size, train_tgt, train_src)
     if args.wocausal:
         net.adj_matrix.requires_grad = False
     elif args.wosource:
@@ -130,5 +144,5 @@ for epoch in range(args.epoch):
         print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
     print('###########################################################################', '\n')
 
-torch.save(net.state_dict(), 'dataset/Tenrec/ready/model.pth')
+torch.save(net.state_dict(), 'dataset/'+args.dataset+'/ready/model.pth')
 
