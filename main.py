@@ -36,9 +36,9 @@ if args.dataset=='douban':
     data_utils.split_data(args.ood, args.sparsity)
     train_tgt, train_src = data_utils.load_data()
     if args.ood:
-        test, test_ood1, test_ood2, test_ood1_55, test_ood1_64, test_ood1_73, test_ood2_64, test_ood2_46, test_ood2_28 = data_utils.load_test(args.ood)
+        test, test_ood1, test_ood1_55, test_ood1_64, test_ood1_73 = data_utils.load_test(args.ood)
     else:
-        test, test_ood1, test_ood2 = data_utils.load_test(args.ood)
+        test, test_ood1 = data_utils.load_test(args.ood)
 
     net = model.CDCOR(2106, 9555, 6777, args.latent_dim)
 else:
@@ -127,8 +127,9 @@ for epoch in range(args.epoch):
     print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
     HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood1)
     print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
-    HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2)
-    print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
+    if args.dataset!='douban':
+        HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2)
+        print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
     if args.ood:
         HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood1_55)
         print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
@@ -136,12 +137,13 @@ for epoch in range(args.epoch):
         print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
         HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood1_73)
         print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
-        HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_64)
-        print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
-        HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_46)
-        print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
-        HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_28)
-        print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
+        if args.dataset!='douban':
+            HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_64)
+            print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
+            HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_46)
+            print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
+            HR5, HR10, NDCG5, NDCG10 = evaluate.metrics(net, test_ood2_28)
+            print('HR@5=', HR5, 'HR@10=', HR10, 'NDCG@5=', NDCG5, 'NDCG@10=', NDCG10)
     print('###########################################################################', '\n')
 
 torch.save(net.state_dict(), 'dataset/'+args.dataset+'/ready/model.pth')
